@@ -32,14 +32,16 @@ async function doWork() {
     const template = JSON.parse(
       readFileSync("./fixtures/templates/marketplace.json", "utf8")
     );
-    const testTemplateId = "40bb9538-22f0-4588-b8c6-d927704f1cc7";
+    const testTemplateId = "test-marketplace";
 
-    // await client.query(`DELETE FROM "Build"`);
-    // await client.query(`DELETE FROM "AuthorizationToken"`);
-    // await client.query(`DELETE FROM "Project"`);
-    // await client.query(`DELETE FROM "DashboardProject"`);
-    // await client.query(`DELETE FROM "Team"`);
-    // await client.query(`DELETE FROM "User"`);
+    await client.query(`DELETE FROM "Build"`);
+    await client.query(`DELETE FROM "Asset"`);
+    await client.query(`DELETE FROM "File"`);
+    await client.query(`DELETE FROM "AuthorizationToken"`);
+    await client.query(`DELETE FROM "Project"`);
+    await client.query(`DELETE FROM "DashboardProject"`);
+    await client.query(`DELETE FROM "Team"`);
+    await client.query(`DELETE FROM "User"`);
 
     await client.query(
       `DELETE FROM "Build" WHERE id = '${testTemplateId}-build'`
@@ -60,25 +62,41 @@ async function doWork() {
       `INSERT INTO "DashboardProject" ("id", "title", "domain", "userId", "marketplaceApprovalStatus") VALUES ('${testTemplateId}', 'Marketpace template', 'test-domain', 'test-user', 'UNLISTED')`
     );
 
-    const prep = (s) => `[${JSON.stringify(s)}]`;
+    const prep = (s) => JSON.stringify(s);
     const b = template.build;
     const query = `INSERT INTO "Build" 
 ("id", "pages", "projectId", "styleSources", "styles", "breakpoints", "styleSourceSelections", "instances", "deployment", "dataSources" ,"resources")
 VALUES ('${testTemplateId}-build', $1, '${testTemplateId}', $2, $3, $4, $5, $6, $7, $8, $9)
 `;
-    // VALUES ('test-marketplace-build', '${prep(template.build.pages)}', 'test-marketplace', '${prep(template.build.styleSources ?? [])}', '${prep(template.build.styles ?? [])}', '${prep(template.build.breakpoints ?? [])}', '${prep(template.build.styleSourceSelections ?? [])}', '${prep(template.build.instances ?? [])}', '${prep(template.build.deployment ?? [])}', '${prep(template.build.dataSources ?? [])}', '${prep(template.build.resources ?? [])}')
     const values = [
-      prep(b.pages ?? []),
-      prep(b.styleSources ?? []),
-      prep(b.styles ?? []),
-      prep(b.breakpoints ?? []),
-      prep(b.styleSourceSelections ?? []),
-      prep(b.instances ?? []),
-      prep(b.deployment ?? []),
-      prep(b.dataSources ?? []),
-      prep(b.resources ?? []),
+      prep(b.pages ?? {}),
+      prep(b.styleSources?.map((s) => s[1]) ?? []),
+      prep(b.styles?.map((s) => s[1]) ?? []),
+      prep(b.breakpoints?.map((s) => s[1]) ?? []),
+      prep(b.styleSourceSelections?.map((s) => s[1]) ?? []),
+      prep(b.instances?.map((s) => s[1]) ?? []),
+      null,
+      prep(b.dataSources?.map((s) => s[1]) ?? []),
+      prep(b.resources?.map((s) => s[1]) ?? []),
     ];
     await client.query(query, values);
+
+    for (const asset of template.assets) {
+      await client.query(
+        `INSERT INTO "File" ("name", "format", "size", "description", "meta", "status", "uploaderProjectId") VALUES ($1, $2, $3, $4, $5, 'UPLOADED', $6)`,
+        [
+          asset.name,
+          asset.format,
+          asset.size,
+          asset.description,
+          JSON.stringify(asset.meta),
+          testTemplateId,
+        ]
+      );
+      await client.query(
+        `INSERT INTO "Asset" ("id", "projectId", "name") VALUES ('${asset.id}', '${testTemplateId}', '${asset.name}')`
+      );
+    }
 
     console.log(template);
   } catch (err) {
