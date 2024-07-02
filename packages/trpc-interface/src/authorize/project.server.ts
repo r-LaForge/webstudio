@@ -98,6 +98,7 @@ export const hasProjectPermit = async (
 
       // VENDASTA r-LaForge test template
       "30a09e33-d18f-4a3e-a70b-76bb0b3c0c4a",
+      "40bb9538-22f0-4588-b8c6-d927704f1cc7",
     ];
 
     // @todo Delete and use tokens
