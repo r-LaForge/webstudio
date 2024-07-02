@@ -95,6 +95,9 @@ export const hasProjectPermit = async (
       // Staging IDs
       "e3dd56f9-ffd9-4692-8a61-e835de822e21",
       "90b41d4e-f5e9-48d6-a954-6249b146852a",
+
+      // VENDASTA r-LaForge test template
+      "30a09e33-d18f-4a3e-a70b-76bb0b3c0c4a",
     ];
 
     // @todo Delete and use tokens
